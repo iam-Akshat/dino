@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Wallet Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        [v-cloak] { display: none; }
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-indigo-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-wallet mr-2"></i> Internal Wallet
+            </h1>
+            <div id="user-selector-container" class="flex items-center space-x-2">
+                <label for="user-select" class="text-sm font-medium">Switch User:</label>
+                <select id="user-select" class="bg-indigo-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+                    <option value="">Loading users...</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-6 space-y-8">
+        <!-- User Status -->
+        <section id="user-info" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 id="current-username" class="text-xl font-bold text-gray-800">User Dashboard</h2>
+                    <p id="current-user-id" class="text-sm text-gray-500 font-mono"></p>
+                </div>
+                <div class="flex space-x-4">
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400 uppercase font-semibold">Status</p>
+                        <span id="user-status-badge" class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700">ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wallet Cards -->
+        <div id="wallets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Wallets will be injected here -->
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Transaction Forms -->
+            <section class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-exchange-alt mr-2 text-indigo-500"></i> New Transaction
+                    </h3>
+                    <form id="tx-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Action</label>
+                            <select id="tx-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="topup">Topup (Add Funds)</option>
+                                <option value="spend">Spend (Remove Funds)</option>
+                                <option value="bonus">Bonus (Reward)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Asset</label>
+                            <select id="tx-asset" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <!-- Assets will be injected here -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Amount</label>
+                            <input type="number" id="tx-amount" min="1" step="1" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2 border" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Metadata (Optional)</label>
+                            <input type="text" id="tx-metadata" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2 border" placeholder="e.g. Purchase item #123">
+                        </div>
+                        <button type="submit" id="submit-tx" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Execute Transaction
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Ledger History -->
+            <section class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-ul mr-2 text-indigo-500"></i> Transaction Ledger
+                        </h3>
+                        <div id="history-wallet-name" class="text-sm font-medium text-indigo-600">Select a wallet to view history</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Direction</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metadata</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Ledger entries will be injected here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">No history to display</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pagination" class="p-4 bg-gray-50 border-t border-gray-100 flex justify-center hidden">
+                        <button id="load-more" class="text-sm text-indigo-600 font-semibold hover:text-indigo-800">Load More Transactions</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

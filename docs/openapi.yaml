@@ -1,0 +1,140 @@
+openapi: 3.0.0
+info:
+  title: Internal Wallet Service
+  version: 1.0.0
+  description: A high-performance, double-entry ledger-based wallet service.
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /wallets/{userId}/{assetSlug}/balance:
+    get:
+      summary: Get user wallet balance
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assetSlug
+          in: path
+          required: true
+          schema:
+            type: string
+            example: gold_coins
+      responses:
+        '200':
+          description: Wallet balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: string
+                    example: "100"
+                  asset:
+                    type: string
+                    example: gold_coins
+                  userId:
+                    type: string
+                    format: uuid
+        '404':
+          description: Asset or Wallet not found
+
+  /transactions/topup:
+    post:
+      summary: Top-up user wallet (System -> User)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created
+        '400':
+          description: Invalid request or missing header
+
+  /transactions/bonus:
+    post:
+      summary: Issue bonus to user wallet (System -> User)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created
+
+  /transactions/spend:
+    post:
+      summary: Spend credits (User -> System)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created
+        '400':
+          description: Insufficient funds or invalid request
+
+components:
+  schemas:
+    TransactionRequest:
+      type: object
+      required:
+        - userId
+        - assetSlug
+        - amount
+      properties:
+        userId:
+          type: string
+          format: uuid
+        assetSlug:
+          type: string
+          example: gold_coins
+        amount:
+          type: string
+          description: Amount as a string (to handle BigInt precision)
+          example: "50"
+        metadata:
+          type: string
+          example: "In-game purchase"
