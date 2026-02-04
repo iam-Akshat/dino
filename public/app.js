@@ -172,7 +172,7 @@ async function loadHistory(walletId, isLoadMore = false) {
         const response = await fetch(url);
         const result = await response.json();
 
-        if (!response.ok) throw new Error(result.error);
+        if (!response.ok) throw new Error(result.error || 'Failed to fetch history');
 
         renderHistory(result.data, isLoadMore);
         nextCursor = result.pagination.nextCursor;
@@ -183,7 +183,12 @@ async function loadHistory(walletId, isLoadMore = false) {
             pagination.classList.add('hidden');
         }
     } catch (error) {
-        showToast('Failed to load history', 'error');
+        showToast(error.message || 'Failed to load history', 'error');
+        if (!isLoadMore) {
+            ledgerBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-medium">
+                <i class="fas fa-exclamation-triangle mr-2"></i> ${error.message}
+            </td></tr>`;
+        }
     }
 }
 
