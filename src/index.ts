@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import pinoHttp from "pino-http";
+import path from "path";
 import { logger } from "./utils/logger";
 import { idempotencyMiddleware } from "./middleware/idempotency";
 import { transactionController } from "./modules/transactions/transaction.controller";
@@ -12,13 +13,21 @@ dotenv.config();
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for demo so CDNs work
+}));
 app.use(cors());
 app.use(express.json());
 app.use(pinoHttp({ logger }));
 
+// Serve static files
+const publicPath = path.join(process.cwd(), "public");
+console.log("Serving static files from:", publicPath);
+app.use(express.static(publicPath));
+
 // Routes
 app.get("/health", (req, res) => {
+  console.log("Health check requested");
   res.json({ status: "ok" });
 });
 
@@ -33,7 +42,11 @@ app.post("/transactions/topup", idempotencyMiddleware, transactionController.top
 app.post("/transactions/bonus", idempotencyMiddleware, transactionController.bonus);
 app.post("/transactions/spend", idempotencyMiddleware, transactionController.spend);
 
-app.use(express.static("public"));
+// Fallback to index.html for SPA-like behavior if needed, 
+// but for now just ensure / serves index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
