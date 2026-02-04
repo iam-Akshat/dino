@@ -21,6 +21,7 @@ COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/src ./src
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/drizzle ./drizzle
+COPY --from=build /usr/src/app/public ./public
 
 USER bun
 EXPOSE 3000
