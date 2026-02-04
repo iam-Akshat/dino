@@ -16,7 +16,8 @@ A high-performance, ACID-compliant ledger-based wallet service built with **Bun*
 This service follows a **Layered (Clean) Architecture** pattern to ensure separation of concerns and testability.
 
 ### Layers
-1.  **Interface Layer (HTTP)**
+1.  **Interface Layer (HTTP & UI)**
+    *   **Dashboard**: An interactive HTML/JS UI available at the root (`/`) for real-time wallet management.
     *   **Controllers**: Handle HTTP requests, validate input (Zod), and map responses.
     *   **Middleware**: Enforce `Idempotency-Key` headers for all write operations.
 
@@ -104,6 +105,13 @@ bun run db:seed
 bun run dev
 ```
 
+### 5. Access the Dashboard
+Open your browser and navigate to `http://localhost:3000`. The dashboard allows you to:
+*   Switch between seeded users.
+*   View balances for all assets (Gold Coins, Diamonds).
+*   Execute Topup, Spend, and Bonus transactions.
+*   View real-time transaction ledger history.
+
 ### Running Tests
 ```bash
 export NODE_ENV=test
@@ -112,7 +120,15 @@ bun test
 
 ---
 
-## Scalability Decisions
+## Technology Stack & Rationale
+
+- **Bun**: Chosen for its high-performance runtime and integrated toolchain (testing, bundling, package management). Its speed is critical for financial services requiring low latency.
+- **Express**: A mature, minimalist framework that provides reliable routing and middleware support without excessive overhead.
+- **Drizzle ORM**: Selected for its "TypeScript-first" approach and near-zero overhead. Unlike "heavy" ORMs, it allows for fine-grained control over SQL (essential for `FOR UPDATE` locks) while maintaining type safety.
+- **PostgreSQL**: Used as the source of truth for its robust support for ACID transactions, complex constraints, and row-level locking capabilities.
+- **Tailwind CSS**: Used for the dashboard to quickly build a responsive, professional UI with minimal custom CSS.
+
+## Scalability & Concurrency Decisions
 
 ### 1. Pessimistic Locking (`SELECT ... FOR UPDATE`)
 To prevent race conditions (e.g., double-spending), we lock the relevant wallet rows *before* modifying the balance.
@@ -140,8 +156,24 @@ We use PostgreSQL `numeric` (mapped via Drizzle as `bigint`) instead of `float`.
 
 ### Endpoints
 
+#### `GET /`
+Serves the interactive dashboard.
+
 #### `GET /health`
 Health check endpoint.
+
+#### `GET /users`
+Lists all registered users.
+
+#### `GET /assets`
+Lists all available assets.
+
+#### `GET /users/:userId/wallets`
+Lists all wallets for a specific user, including asset details and balances.
+
+#### `GET /wallets/:id/history`
+Retrieves paginated transaction history for a specific wallet.
+*   **Query Params**: `limit` (default 10), `cursor` (for pagination).
 
 #### `GET /wallets/:userId/:assetSlug/balance`
 Retrieves the current balance for a user.
